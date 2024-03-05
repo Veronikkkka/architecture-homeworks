@@ -1,0 +1,33 @@
+version: '3'
+
+services:
+  db:
+    image: mysql:latest
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "myrootpassword"
+    ports:
+      - 8081:80
+    networks:
+      mynetwork:
+        aliases:
+          - mysql
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: my_app
+    ports:
+      - 8080:80
+    depends_on:
+      - db
+    networks:
+      mynetwork:
+        aliases:
+          - mysql
+
+networks:
+  mynetwork:
+    driver: bridge
+    external: true
