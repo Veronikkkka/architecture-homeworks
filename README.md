@@ -17,26 +17,27 @@ The docker-compose.yml file defines two services: "db" for the MySQL database an
 Describe the specific results or outcomes of the application's execution.
 Provide any relevant screenshots, logs, or data to illustrate the results.
 
-
+[result1](https://gitlab.com/architectureit/architecture-Shevtsova/-/blob/homework3/result1.png?ref_type=heads)
+[result2](https://gitlab.com/architectureit/architecture-Shevtsova/-/blob/homework3/result2.png?ref_type=heads)
+[result3](https://gitlab.com/architectureit/architecture-Shevtsova/-/blob/homework3/result3.png?ref_type=heads)
+[result4](https://gitlab.com/architectureit/architecture-Shevtsova/-/blob/homework3/result4.png?ref_type=heads)
 
 
 ### How to run the application
 
-🦾 [ Example – modify for your case ] 🦾
+
 
 ❗️ It is **mandatory** to illustrate results, otherwise it will lead to _points deduction_.❗️
 
 1. Clone the repository
 
-   `git clone {your_repo_name}`
+   `git clone https://gitlab.com/your-username/architecture-Shevtsova.git -b homework3`
 
-2. Go to directory `{your_hw_directory}`
-   `cd {your_hw_directory}`
+2. Go to directory `{cd architecture-Shevtsova}`
+   `cd architecture-Shevtsova`
 
 3. Run this command to ...
-   `{command_to_run}`
-   ![image_command_result.png]({your_image_path})
+   `./build.sh`
+   `docker-compose up -d` * 2
+   ![result3](https://gitlab.com/architectureit/architecture-Shevtsova/-/blob/homework3/result3.png?ref_type=heads)
 
-## 🎀 Additional Notes
-
-Add any additional information here, which you consider important to note, especially if it is related to homework structure, what can be improved, and what you has struggles with.
