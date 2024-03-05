@@ -39,5 +39,5 @@ Provide any relevant screenshots, logs, or data to illustrate the results.
 3. Run this command to ...
    `./build.sh`
    `docker-compose up -d` * 2
-   ![result3](https://gitlab.com/architectureit/architecture-Shevtsova/-/blob/homework3/result3.png?ref_type=heads)
+   ![result1](https://gitlab.com/architectureit/architecture-Shevtsova/-/blob/homework3/result1.png?ref_type=heads)
 
