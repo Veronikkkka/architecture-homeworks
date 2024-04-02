@@ -1,4 +1,4 @@
-# Homework 4: 🐳 Getting started with Docker
+# Homework 4: 🐳 
 
 Author: Veronika
 
