@@ -1,0 +1,8 @@
+flask
+flask_sqlalchemy
+psycopg2-binary
+fastapi
+pydantic
+uvicorn
+mysql-connector-python
+pymongo[srv]
