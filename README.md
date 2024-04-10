@@ -23,6 +23,8 @@ Author: Veronika
    `docker-compose up --build`
    ![1.png](https://gitlab.com/architectureit/architecture-Shevtsova/-/blob/hw5/1.png)
 
+   documentation - localhost:8000/docs
+
 ## 🎀 Additional Notes
 
 Результати роботи кожного ендпоінта є у файлі results.docx
