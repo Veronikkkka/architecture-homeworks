@@ -17,7 +17,7 @@ All screenshots you can see in Result.docx in this repo
 
 1. Clone the repository
 
-   `git clone hw6`
+   `git clone https://gitlab.com/architectureit/architecture-Shevtsova/-/tree/hw6`
 
 2. Go to directory `hw6`
    `cd hw6`
