@@ -1,0 +1,19 @@
+# Використовуємо офіційний образ Python
+FROM python:3.8
+
+WORKDIR /app
+# Встановлюємо залежності за допомогою pip
+# COPY requirements.txt /app/requirements.txt
+# RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# # Копіюємо ваш код в контейнер
+# COPY storage.py /app/storage.py
+
+# # Встановлюємо працюючу директорію
+# WORKDIR /app
+COPY storage.py .
+
+RUN pip install confluent-kafka
+
+# Запускаємо обробку повідомлень при старті контейнера
+CMD ["python", "./storage.py"]
