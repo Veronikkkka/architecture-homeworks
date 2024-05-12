@@ -1,0 +1,160 @@
+# version: '3.5'
+# services:
+#   # database:
+#   #   container_name: postgres1
+#   #   image: postgres:latest    
+#   #   environment:
+#   #     POSTGRES_USER: username
+#   #     POSTGRES_PASSWORD: password
+#   #     POSTGRES_DB: bd
+      
+#   #   ports:
+#   #     - 5432:5432
+#   #   volumes:
+#   #     - db_volume:/var/lib/postgresql
+#   #     - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+#   # database:
+#   #   container_name: sqlite1
+#   #   image: tiangolo/uvicorn-gunicorn-fastapi:python3.8 #ubuntu:latest #tiangolo/uwsgi-nginx-flask:python3.8
+#   #   volumes:
+#   #     - ./events.db:/app/events.db
+#     # ports:
+#     #   - 5432:5432
+ 
+#     # command: bash -c "apt-get update && apt-get install -y sqlite3 && bash"
+#   # database:
+#   #   container_name: mysql1
+#   #   image: mysql:latest    
+#   #   environment:
+#   #     MYSQL_ROOT_PASSWORD: "password"
+#   #     # MYSQL_DATABASE: bd
+#   #     # MYSQL_USER: username
+#   #     # MYSQL_PASSWORD: password
+      
+#   #   ports:
+#   #     - 5432:5432
+#     # volumes:
+#     #   - db_volume:/var/lib/mysql
+#     #   - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+#   database:
+#     image: alpine:latest
+#     command: tail -f /dev/null
+
+#   web:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+#     # ports:
+#     #   - "5000:5000"
+#     depends_on:
+#       - database
+
+# volumes:
+#   db_volume:
+
+# networks:
+#   mynetwork:
+#     driver: bridge
+#     external: true
+
+version: '3'
+
+services:
+  db:
+    image: alpine:latest
+    command: tail -f /dev/null
+    volumes:
+      - db_volume:/path/to/mount
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      # - mongodb
+      - kafka
+    volumes:
+      - .:/app
+    # networks:
+    #   - mynetwork
+
+  # mongodb:
+  #   container_name:  mongodb
+  #   image: mongo:latest
+  #   ports:
+  #     - "27017:27017"
+  #   networks:
+  #     - mynetwork
+  #   # volumes:
+  #   #   - ./mongodb:/data/db
+
+  # redis:
+  #   image: redis:latest
+  #   container_name: redis
+  #   restart: always
+  #   # volumes:
+  #   #   - redis_volume_data:/data
+  #   ports:
+  #     - "6379:6379"
+  #   # decode_responses: True
+  # #   networks:
+  #     - mynetwork
+
+  kafka:
+    image: wurstmeister/kafka:latest
+    restart: on-failure
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:9093,OUTSIDE://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_LISTENERS: INSIDE://0.0.0.0:9093,OUTSIDE://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_CREATE_TOPICS: "ticket_reservation:1:1,reservation_response:1:1,ticket_purchase:1:1,purchase_response:1:1,"
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  zookeeper:
+    image: wurstmeister/zookeeper:latest
+    ports:
+      - "2181:2181"
+
+  # comments_handler:
+  #   build: 
+  #     context: .
+  #     dockerfile: Dockerfile-handler
+  #   restart: on-failure
+  #   ports:
+  #     - "8000:8000"
+  #   depends_on:
+  #     - kafka
+
+  comments_storage:
+    build:
+      context: ./tickets_managment/
+      dockerfile: Dockerfile-storage
+    restart: always
+    depends_on:
+      - kafka
+      - db
+
+  purchase:
+    build:
+      context: ./tickets_managment/
+      dockerfile: Dockerfile-purchase
+    restart: always
+    depends_on:
+      - kafka
+      - db
+
+volumes:
+  db_volume:
+
+# networks:
+#   mynetwork:
+#     external: true
