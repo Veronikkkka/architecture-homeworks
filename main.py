@@ -52,14 +52,8 @@ def get_events_availability(db: Session = Depends(get_db)):
 
 @app.put("/performers/{performer_id}/", response_model=schemas.PerformerOut)
 def update_performer(performer_id: int, performer: schemas.PerformerCreate, db: Session = Depends(get_db)):
-    # db_performer = crud.get_performer(db, performer_id)
-    # if db_performer is None:
-    #     raise HTTPException(status_code=404, detail="Performer not found")
     return crud.update_performer(db=db, performer_id=performer_id, performer=performer)
 
-# @app.put("/events/{event_id}/", response_model=schemas.EventOut)
-# def update_event(event_id: int, event: schemas.EventCreate, db: Session = Depends(get_db)):
-#     return crud.update_event(db=db, event_id=event_id, event=event)
 
 @app.get("/events/{event_id}/reserved-users", response_model=list[schemas.UserOut])
 def get_reserved_users_for_event(event_id: int, db: Session = Depends(get_db)):
@@ -74,10 +68,6 @@ def get_tickets_for_visitor(user_id: int, db: Session = Depends(get_db)):
     tickets = crud.get_tickets_for_visitor(db, user_id)
     return tickets
 
-# @app.post("/events/", response_model=schemas.EventOut)
-# def create_event(event: schemas.EventCreate, db: Session = Depends(get_db)):
-#     return crud.create_event(db=db, event=event)
-
 
 @app.get("/events/", response_model=list[schemas.EventOut])
 def get_events(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
@@ -86,16 +76,6 @@ def get_events(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
 
 
 
-
-
-# @app.delete("/events/{event_id}/", response_model=schemas.EventOut)
-# def delete_event(event_id: int, db: Session = Depends(get_db)):
-#     db_event = db.query(Event).filter(Event.event_id == event_id).first()
-#     if db_event is None:
-#         raise HTTPException(status_code=404, detail="Event not found")
-#     db.delete(db_event)
-#     db.commit()
-#     return db_event
 
 @app.post("/tickets/", response_model=schemas.TicketOut)
 def create_ticket(ticket: schemas.TicketCreate, db: Session = Depends(get_db)):
@@ -174,10 +154,6 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     if deleted_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return deleted_user
-# @app.get("/users/", response_model=list[schemas.UserOut])
-# def get_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-#     users = crud.get_users(db, skip=skip, limit=limit)
-#     return users
 
 @app.post("/events/{event_id}/performers/{performer_id}", response_model=schemas.EventOut)
 def add_performer_to_event(event_id: int, performer_id: int, db: Session = Depends(get_db)):
@@ -204,13 +180,6 @@ def get_ticket(ticket_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Ticket not found")
     return ticket
 
-# @app.get("/events/{event_id}", response_model=schemas.EventOut)
-# def get_event(event_id: int, db: Session = Depends(get_db)):
-#     event = crud.get_event(db=db, event_id=event_id)
-#     if event is None:
-#         raise HTTPException(status_code=404, detail="Event not found")
-#     return event
-
 
 
 @app.get("/performers/{performer_id}", response_model=schemas.PerformerOut)
@@ -220,25 +189,6 @@ def get_performer(performer_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Performer not found")
     return performer
 
-# @app.put("/tickets/reserve/{event_id}", response_model=schemas.TicketOut)
-# def reserve_ticket(event_id: int, user_id: int = -1, duration: int = 15, db: Session = Depends(SessionLocal)):
-    
-#     # Check if the event exists
-#     event = crud.get_event(db, event_id)
-#     if not event:
-#         raise HTTPException(status_code=404, detail="Event not found")
-
-#     # Check if the user exists
-#     user = crud.get_user(db, user_id)
-#     if not user:
-#         raise HTTPException(status_code=404, detail="User not found")
-
-#     # Reserve the ticket
-#     ticket = crud.reserve_ticket(db, event_id, user_id, duration)
-#     if not ticket:
-#         raise HTTPException(status_code=400, detail="Ticket cannot be reserved")
-
-#     return ticket
 
 @app.put("/tickets/reserve/{ticket_id}/", response_model=schemas.TicketOut)
 def reserve_ticket(ticket_id: int,  user_id: int = -1, db: Session = Depends(get_db)):
@@ -284,70 +234,10 @@ def return_ticket(ticket_id: int, db: Session = Depends(get_db)):
     else:
         raise HTTPException(status_code=404, detail="Failed to return ticket")
     
-# @app.post("/descriptions/")
-# async def create_description(description: schemas.DescriptionCreate):
-#     description_dict = description.dict()
-#     result = collection.insert_one(description_dict)
-#     return {"id": str(result.inserted_id)}
-
-
-# @app.get("/descriptions/", response_model=list[schemas.DescriptionOut])
-# async def get_descriptions():
-#     descriptions = collection.find()
-#     descriptions_list = []
-#     for desc in descriptions:
-#         desc['_id'] = str(desc['_id'])  # Перетворення ObjectId на рядок
-#         descriptions_list.append(schemas.DescriptionOut(**desc))  # Створення об'єкта DescriptionOut з MongoDB об'єкта
-#     return descriptions_list
 
 @app.get("/descriptions/")
 async def get_descriptions():
     return schemas.serializeList(collection.find())
-
-# @app.post('/descriptions/{event_id}')
-# async def create_description(event_id: int, description: schemas.DescriptionCreate, db: Session = Depends(get_db)):
-#     event = crud.get_event(db=db, event_id=event_id)
-#     if event is None:
-#         raise HTTPException(status_code=404, detail="Event not found")
-    
-#     description_dict = dict(description)
-#     description_dict["event_id"] = event_id
-#     collection.insert_one(description_dict)
-
-#     return schemas.serializeList(collection.find())
-
-# @app.get("/reviews/{event_id}")
-# async def find_reviews(event_id: int, db: Session = Depends(get_db)):
-#     event = crud.get_event(db=db, event_id=event_id)
-#     if event is None:
-#         raise HTTPException(status_code=404, detail="Event not found")
-#     else:        
-#         reviews = collection2.find({"event_id": event_id})
-#         average_rate = crud.average_rate_for_event(reviews)
-#         return {"reviews": schemas.serializeList(collection2.find({"event_id": event_id})), "average_rate": average_rate}
-    
-
-
-# @app.post('/reviews/{event_id}/{user_id}/{rate}')
-# async def create_review(event_id: int, user_id: int, rate:int, review: schemas.ReviewCreate, db: Session = Depends(get_db)):
-#     event = crud.get_event(db=db, event_id=event_id)
-#     if event is None:
-#         raise HTTPException(status_code=404, detail="Event not found")
-    
-#     user = crud.get_user(db, user_id)
-#     if not user:
-#         raise HTTPException(status_code=404, detail="User not found")
-    
-#     if rate < 1 or rate > 10:
-#         raise HTTPException(status_code=404, detail="Rate is out of range")
-    
-#     review_dict = dict(review)
-#     review_dict["event_id"] = event_id
-#     review_dict["user_id"] = user_id
-#     review_dict["rate"] = rate
-#     collection2.insert_one(review_dict)
-    
-#     return schemas.serializeList(collection2.find())
 
 
 @app.get("/events/{limit}/{min_reviews}/")
@@ -443,28 +333,7 @@ async def create_description(event_id: int, description: schemas.DescriptionCrea
 
 @app.put('/descriptions/{event_id}')
 async def update_description(event_id: int, description: schemas.DescriptionCreate):
-    # # Спробуємо отримати подію з кешу
-    # cached_event = redis_cache.get(event_id)
-    # if cached_event:
-    #     event = cached_event
-    # else:
-    #     # Якщо подія відсутня у кеші, отримуємо її з бази даних
-    #     event = crud.get_event(db=db, event_id=event_id)
-    #     if event is None:
-    #         raise HTTPException(status_code=404, detail="Event not found")
-
-    #     # Зберігаємо подію у кеші
-    #     redis_cache.set(event_id, event)
-
-    # # Оновлюємо опис події у базі даних
-    # description_dict = dict(description)
-    # description_dict["event_id"] = event_id
-    # collection.update_one({"event_id": event_id}, {"$set": description_dict}, upsert=True)
-
-    # # Оновлюємо опис події у кеші
-    # redis_cache.set(f"des_{event_id}", event)
-
-    # return {"message": "Description updated successfully"}
+    
     description_key = f"des_{event_id}"
     cached_description = redis_cache.get(description_key)
     if cached_description:
