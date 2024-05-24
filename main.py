@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, HTTPException, BackgroundTasks
+from fastapi import Depends, FastAPI, HTTPException, BackgroundTasks, Header
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, date
 
@@ -39,6 +39,28 @@ def get_db():
     finally:
         db.close()
 
+@app.get("/tickets/")
+async def read_tickets(api_key: str = Header(...), db: Session = Depends(get_db)):
+    if api_key not in api_keys:
+        raise HTTPException(status_code=403, detail="Invalid API Key")
+    if not limiter_.allow_request(api_key):
+        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+    
+    # return limiter_.tokens
+    return crud.get_tickets(db)
+    
+
+@app.post("/tickets")
+def create_ticket(ticket: schemas.TicketCreate, api_key: str = Header(...), db: Session = Depends(get_db)):
+    event_id = ticket.event_id
+    user_id = ticket.user_id
+    if api_key not in api_keys:
+        raise HTTPException(status_code=403, detail="Invalid API Key")
+    if not limiter_.allow_request(api_key):
+        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+    # return limiter_.tokens
+    return crud.create_ticket(db=db, ticket=ticket, event_id=event_id, user_id=user_id)
+
 
 @app.get('/descriptions/{event_id}')
 async def get_description(event_id: int):
@@ -74,10 +96,6 @@ def update_performer(performer_id: int, performer: schemas.PerformerCreate, db: 
     #     raise HTTPException(status_code=404, detail="Performer not found")
     return crud.update_performer(db=db, performer_id=performer_id, performer=performer)
 
-# @app.put("/events/{event_id}/", response_model=schemas.EventOut)
-# def update_event(event_id: int, event: schemas.EventCreate, db: Session = Depends(get_db)):
-#     return crud.update_event(db=db, event_id=event_id, event=event)
-
 @app.get("/events/{event_id}/reserved-users", response_model=list[schemas.UserOut])
 def get_reserved_users_for_event(event_id: int, db: Session = Depends(get_db)):
     reserved_users = crud.get_users_reserved_tickets_for_event(db, event_id)
@@ -91,34 +109,10 @@ def get_tickets_for_visitor(user_id: int, db: Session = Depends(get_db)):
     tickets = crud.get_tickets_for_visitor(db, user_id)
     return tickets
 
-# @app.post("/events/", response_model=schemas.EventOut)
-# def create_event(event: schemas.EventCreate, db: Session = Depends(get_db)):
-#     return crud.create_event(db=db, event=event)
-
-
 @app.get("/events/", response_model=list[schemas.EventOut])
 def get_events(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     events = crud.get_events(db, skip=skip, limit=limit)
     return events
-
-
-
-
-
-# @app.delete("/events/{event_id}/", response_model=schemas.EventOut)
-# def delete_event(event_id: int, db: Session = Depends(get_db)):
-#     db_event = db.query(Event).filter(Event.event_id == event_id).first()
-#     if db_event is None:
-#         raise HTTPException(status_code=404, detail="Event not found")
-#     db.delete(db_event)
-#     db.commit()
-#     return db_event
-
-# @app.post("/tickets/", response_model=schemas.TicketOut)
-# def create_ticket(ticket: schemas.TicketCreate, db: Session = Depends(get_db)):
-#     event_id = ticket.event_id
-#     user_id = ticket.user_id
-#     return crud.create_ticket(db=db, ticket=ticket, event_id=event_id, user_id=user_id)
 
 
 
@@ -130,33 +124,6 @@ async def periodic_update_rate_limiter(background_tasks: BackgroundTasks):
         background_tasks.add_task(update_rate_limiter)
         await asyncio.sleep(1)  # Update rate limiter every second
 
-
-@app.get("/tickets")
-async def read_tickets(api_key: str, db: Session = Depends(get_db)):
-    if api_key not in api_keys:
-        raise HTTPException(status_code=403, detail="Invalid API Key")
-    if not limiter_.allow_request(api_key):
-        raise HTTPException(status_code=429, detail="Rate limit exceeded")
-    
-    # return limiter_.tokens
-    return crud.get_tickets(db)
-    
-# , response_model=schemas.TicketOut
-@app.post("/tickets")
-def create_ticket(api_key:str, ticket: schemas.TicketCreate, db: Session = Depends(get_db)):
-    event_id = ticket.event_id
-    user_id = ticket.user_id
-    if api_key not in api_keys:
-        raise HTTPException(status_code=403, detail="Invalid API Key")
-    if not limiter_.allow_request(api_key):
-        raise HTTPException(status_code=429, detail="Rate limit exceeded")
-    # return limiter_.tokens
-    return crud.create_ticket(db=db, ticket=ticket, event_id=event_id, user_id=user_id)
-
-
-# @app.get("/tickets/", response_model=list[schemas.TicketOut])
-# def get_tickets(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-#     return crud.get_tickets(db, skip=skip, limit=limit)
 
 @app.put("/tickets/{ticket_id}/", response_model=schemas.TicketOut)
 def update_ticket(ticket_id: int, ticket_data: schemas.TicketCreate, db: Session = Depends(get_db)):
@@ -255,14 +222,6 @@ def get_ticket(ticket_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Ticket not found")
     return ticket
 
-# @app.get("/events/{event_id}", response_model=schemas.EventOut)
-# def get_event(event_id: int, db: Session = Depends(get_db)):
-#     event = crud.get_event(db=db, event_id=event_id)
-#     if event is None:
-#         raise HTTPException(status_code=404, detail="Event not found")
-#     return event
-
-
 
 @app.get("/performers/{performer_id}", response_model=schemas.PerformerOut)
 def get_performer(performer_id: int, db: Session = Depends(get_db)):
@@ -270,26 +229,6 @@ def get_performer(performer_id: int, db: Session = Depends(get_db)):
     if performer is None:
         raise HTTPException(status_code=404, detail="Performer not found")
     return performer
-
-# @app.put("/tickets/reserve/{event_id}", response_model=schemas.TicketOut)
-# def reserve_ticket(event_id: int, user_id: int = -1, duration: int = 15, db: Session = Depends(SessionLocal)):
-    
-#     # Check if the event exists
-#     event = crud.get_event(db, event_id)
-#     if not event:
-#         raise HTTPException(status_code=404, detail="Event not found")
-
-#     # Check if the user exists
-#     user = crud.get_user(db, user_id)
-#     if not user:
-#         raise HTTPException(status_code=404, detail="User not found")
-
-#     # Reserve the ticket
-#     ticket = crud.reserve_ticket(db, event_id, user_id, duration)
-#     if not ticket:
-#         raise HTTPException(status_code=400, detail="Ticket cannot be reserved")
-
-#     return ticket
 
 @app.put("/tickets/reserve/{ticket_id}/", response_model=schemas.TicketOut)
 def reserve_ticket(ticket_id: int,  user_id: int = -1, db: Session = Depends(get_db)):
@@ -334,71 +273,10 @@ def return_ticket(ticket_id: int, db: Session = Depends(get_db)):
         return {"message": "Ticket returned successfully"}
     else:
         raise HTTPException(status_code=404, detail="Failed to return ticket")
-    
-# @app.post("/descriptions/")
-# async def create_description(description: schemas.DescriptionCreate):
-#     description_dict = description.dict()
-#     result = collection.insert_one(description_dict)
-#     return {"id": str(result.inserted_id)}
-
-
-# @app.get("/descriptions/", response_model=list[schemas.DescriptionOut])
-# async def get_descriptions():
-#     descriptions = collection.find()
-#     descriptions_list = []
-#     for desc in descriptions:
-#         desc['_id'] = str(desc['_id'])  # Перетворення ObjectId на рядок
-#         descriptions_list.append(schemas.DescriptionOut(**desc))  # Створення об'єкта DescriptionOut з MongoDB об'єкта
-#     return descriptions_list
 
 @app.get("/descriptions/")
 async def get_descriptions():
     return schemas.serializeList(collection.find())
-
-# @app.post('/descriptions/{event_id}')
-# async def create_description(event_id: int, description: schemas.DescriptionCreate, db: Session = Depends(get_db)):
-#     event = crud.get_event(db=db, event_id=event_id)
-#     if event is None:
-#         raise HTTPException(status_code=404, detail="Event not found")
-    
-#     description_dict = dict(description)
-#     description_dict["event_id"] = event_id
-#     collection.insert_one(description_dict)
-
-#     return schemas.serializeList(collection.find())
-
-# @app.get("/reviews/{event_id}")
-# async def find_reviews(event_id: int, db: Session = Depends(get_db)):
-#     event = crud.get_event(db=db, event_id=event_id)
-#     if event is None:
-#         raise HTTPException(status_code=404, detail="Event not found")
-#     else:        
-#         reviews = collection2.find({"event_id": event_id})
-#         average_rate = crud.average_rate_for_event(reviews)
-#         return {"reviews": schemas.serializeList(collection2.find({"event_id": event_id})), "average_rate": average_rate}
-    
-
-
-# @app.post('/reviews/{event_id}/{user_id}/{rate}')
-# async def create_review(event_id: int, user_id: int, rate:int, review: schemas.ReviewCreate, db: Session = Depends(get_db)):
-#     event = crud.get_event(db=db, event_id=event_id)
-#     if event is None:
-#         raise HTTPException(status_code=404, detail="Event not found")
-    
-#     user = crud.get_user(db, user_id)
-#     if not user:
-#         raise HTTPException(status_code=404, detail="User not found")
-    
-#     if rate < 1 or rate > 10:
-#         raise HTTPException(status_code=404, detail="Rate is out of range")
-    
-#     review_dict = dict(review)
-#     review_dict["event_id"] = event_id
-#     review_dict["user_id"] = user_id
-#     review_dict["rate"] = rate
-#     collection2.insert_one(review_dict)
-    
-#     return schemas.serializeList(collection2.find())
 
 
 @app.get("/events/{limit}/{min_reviews}/")

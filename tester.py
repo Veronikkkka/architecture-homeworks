@@ -14,19 +14,23 @@ def get_api_key():
         print("Failed to get API key:", response.text)
         return None
 
-# Функція для виконання запитів GET
 def send_get_request(api_key):
-    url = f"http://localhost:8000/tickets?api_key={api_key}"
-    response = requests.get(url)
+    url = "http://localhost:8000/tickets/"
+    headers = {
+        'accept': 'application/json',
+        'api-key': api_key
+    }
+    response = requests.get(url, headers=headers)
     print("GET request status code:", response.status_code)
     print("GET request response:", response.text)
 
 # Функція для виконання запитів POST
 def send_post_request(api_key):
-    url = f"http://localhost:8000/tickets/?api_key={api_key}"
+    url = "http://localhost:8000/tickets"
     headers = {
         'accept': 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'api-key': api_key
     }
     data = {
         "event_id": 0,
@@ -35,7 +39,7 @@ def send_post_request(api_key):
         "status": "available",
         "user_id": 0
     }
-    response = requests.post(url, headers=headers, data=json.dumps(data))
+    response = requests.post(url, headers=headers, json=data)
     print("POST request status code:", response.status_code)
     print("POST request response:", response.text)
 
@@ -49,11 +53,11 @@ if __name__ == "__main__":
         for i in range(10):
             send_get_request(api_key)
             send_post_request(api_key)
-            # time.sleep(0.1) 
+            time.sleep(0.1) 
 
         
         for i in range(5):
             send_post_request(api_key)
-            time.sleep(0.2)  
+            # time.sleep(0.2)  
 
 
