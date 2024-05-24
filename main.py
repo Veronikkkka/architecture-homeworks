@@ -14,9 +14,10 @@ import secrets
 import asyncio
 
 models.Base.metadata.create_all(bind=engine)
+redis_cache = RedisCache()
 
 app = FastAPI()
-limiter_ = limiter.RateLimiter()
+limiter_ = limiter.RateLimiter(redis_cache)
 api_keys = []
 
 
@@ -27,6 +28,7 @@ def get_api_key():
 async def generate_api_key():
     api_key = get_api_key()
     api_keys.append(api_key)
+    redis_cache.set(api_key, 5)
     return {"api_key": api_key}
 
 # Dependency
@@ -421,7 +423,7 @@ async def find_events_with_reviews(limit: int, min_reviews: int, min_average_rat
         return result[:limit]
     
     
-redis_cache = RedisCache()
+
 
 @app.get("/events/{event_id}")
 def get_event(event_id: int, db: Session = Depends(get_db)):
