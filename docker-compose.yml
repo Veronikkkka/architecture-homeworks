@@ -1,0 +1,51 @@
+version: '3'
+
+services:
+  db:
+    image: alpine:latest
+    command: tail -f /dev/null
+    volumes:
+      - db_volume:/path/to/mount
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - mongodb
+    volumes:
+      - .:/app
+    networks:
+      - mynetwork
+
+  mongodb:
+    container_name:  mongodb
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    networks:
+      - mynetwork
+    # volumes:
+    #   - ./mongodb:/data/db
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: always
+    # volumes:
+    #   - redis_volume_data:/data
+    ports:
+      - "6379:6379"
+    # decode_responses: True
+    networks:
+      - mynetwork
+
+volumes:
+  db_volume:
+
+networks:
+  mynetwork:
+    external: true
