@@ -607,32 +607,38 @@ def delivery_report(err, msg):
     else:
         print(f"Message delivered to {msg.topic()} [{msg.partition()}]")
         
-@app.post("/reserve_ticket/{event_id}/{ticket_id}/{user_id}")
-async def reserve_ticket(ticket_id: int, user_id: int):
-    
-    # success = crud.purchase_tickets(db, user_id, event_id, ticket_id)
-    # if success:
-    #     # return crud.get_tickets(db)
-    message = {"ticket_id": ticket_id, "user_id": user_id}
-    message_json = json.dumps(message)
+import uuid
+pending_reservations = {}
 
-    # Encode the JSON string to bytes
+@app.post("/reserve_ticket/{event_id}/{ticket_id}/{user_id}")
+async def reserve_ticket(event_id: int, ticket_id: int, user_id: int):
+    reservation_id = str(uuid.uuid4())
+    message = {
+        "reservation_id": reservation_id,
+        "event_id": event_id,
+        "ticket_id": ticket_id,
+        "user_id": user_id
+    }
+    message_json = json.dumps(message)
     message_bytes = message_json.encode('utf-8')
-    producer.produce('ticket_reservation', message_bytes, callback = delivery_report)
+
+    producer.produce('ticket_reservation', message_bytes, callback=delivery_report)
     producer.poll(0)
-    producer.flush() 
+    producer.flush()
     
-    time.sleep(5)
-    msg = consumer.poll(timeout=1.0)
-    if msg:
-        response = json.loads(msg.value().decode('utf-8') )
-    else:
-        response = msg
+    pending_reservations[reservation_id] = {"status": "pending"}
+
+    start_time = time.time()
+    while time.time() - start_time < 10:
+        msg = consumer.poll(timeout=1.0)
+        if msg:
+            response = json.loads(msg.value().decode('utf-8'))
+            if response.get("reservation_id") == reservation_id:
+                pending_reservations.pop(reservation_id, None)
+                return {"message": response}
     
-    # producer.produce('ticket_reservations', value=message)
-    return {"message": response}
-    # else:
-    #     raise HTTPException(status_code=404, detail="Ticket not available")
+    pending_reservations.pop(reservation_id, None)
+    raise HTTPException(status_code=404, detail="No response received for the reservation")
 
 consumer2 = Consumer({
     'bootstrap.servers': 'kafka:9093',
@@ -641,28 +647,37 @@ consumer2 = Consumer({
 })
 
 consumer2.subscribe(['purchase_response'])
+pending_purchases = {}
 
-@app.post("/purchase_ticket/{event_id}/{ticket_id}/{user_id}")
-async def reserve_ticket(ticket_id: int, user_id: int):
+@app.post("/purchase_ticket")
+async def reserve_ticket(event_id: int, ticket_id: int, user_id: int, db: Session = Depends(get_db)):
     
-    # success = crud.purchase_tickets(db, user_id, event_id, ticket_id)
-    # if success:
-    #     # return crud.get_tickets(db)
-    message = {"ticket_id": ticket_id, "user_id": user_id}
+    purchase_id = str(uuid.uuid4())
+    message = {
+        "purchase_id": purchase_id,
+        "event_id": event_id,
+        "ticket_id": ticket_id,
+        "user_id": user_id
+    }
     message_json = json.dumps(message)
-
-    # Encode the JSON string to bytes
     message_bytes = message_json.encode('utf-8')
-    producer.produce('ticket_purchase', message_bytes, callback = delivery_report)
+
+    producer.produce('ticket_purchase', message_bytes, callback=delivery_report)
     producer.poll(0)
-    producer.flush() 
+    producer.flush()
     
-    time.sleep(5)
-    msg = consumer2.poll(timeout=3.0)
-    if msg:
-        response = json.loads(msg.value().decode('utf-8') )
-    else:
-        response = msg
-    
-    # producer.produce('ticket_reservations', value=message)
-    return {"message": response}
+    pending_purchases[purchase_id] = {"status": "pending"}
+
+    start_time = time.time()
+    while time.time() - start_time < 10:
+        msg = consumer2.poll(timeout=1.0)
+        if msg:
+            try:    
+                response = json.loads(msg.value().decode('utf-8'))
+                if response.get("purchase_id") == purchase_id:
+                    pending_purchases.pop(purchase_id, None)
+                    return {"message": response}
+            except:
+                raise HTTPException(status_code=404, detail="Something went wrong. Try one more time")
+    pending_purchases.pop(purchase_id, None)
+    raise HTTPException(status_code=404, detail="No response received for the reservation")
