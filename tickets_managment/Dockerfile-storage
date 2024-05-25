@@ -1,0 +1,23 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Copy the requirements.txt file into the container
+# COPY requirements.txt .
+
+# # Install the dependencies
+# RUN pip install --no-cache-dir -r requirements.txt
+
+# # Copy the rest of the application code
+# COPY reservation.py .
+
+# # Start the message processing when the container starts
+# CMD ["python", "./reservation.py"]
+
+# COPY reservation.py .
+COPY . .
+
+RUN pip install confluent-kafka
+RUN pip install --no-cache-dir -r requirements.txt
+# Запускаємо обробку повідомлень при старті контейнера
+CMD ["python", "./reservation.py"]
